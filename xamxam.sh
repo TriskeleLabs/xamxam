@@ -14,22 +14,22 @@ echo "[*] Temp dir: $temp_dir"
 cp $apk_file $temp_dir/
 cd $temp_dir
 
-echo "[*] Downloading: apktool"
 # download latest apktool
+echo "[*] Downloading: apktool"
 apktool_jar=$(curl -s https://api.github.com/repos/iBotPeaches/apktool/releases/latest | jq -r '.assets[0].browser_download_url')
 wget $apktool_jar -O apktool.jar
 
-echo "[*] Downloading: uber-signer"
 # download latest uber-apk-signer
+echo "[*] Downloading: uber-signer"
 ubersigner_jar=$(curl -s https://api.github.com/repos/patrickfav/uber-apk-signer/releases/latest | jq -r '.. | objects | .browser_download_url?' | grep '.jar')
 wget $ubersigner_jar -O ubersigner.jar
 
-echo "[*] Decompiling: $apk_file"
 # decompile apk
+echo "[*] Decompiling: $apk_file"
 java -jar apktool.jar d $apk_file -o decompiled_apk
 
-echo "[*] Creating pyxamstore venv"
 # download pyxamstore and create venv
+echo "[*] Creating pyxamstore venv"
 python3 -m venv pyxamvenv
 source ./pyxamvenv/bin/activate
 git clone https://github.com/jakev/pyxamstore.git
@@ -56,8 +56,8 @@ sed -i 's/22656e666f726365694f53223a2074727565/22656e666f726365694f53223a66616c7
 # android enforce false
 sed -i 's/22656e666f726365416e64726f6964223a2074727565/22656e666f726365416e64726f6964223a66616c7365/' ./Solo.dll.hex
 
+# find all instances of "pinnedCertificates": [something] and replace everything between the [ ] with null bytes
 echo "[*] Removing cert pinning"
-# find all instances of "pinnedCertificates": [something]
 cert_results=$(cat Solo.dll.hex | grep -oP '2270696e6e6564436572746966696361746573223a205b.*?(?=5d)')
 for cert_result in $cert_results
 do
@@ -99,6 +99,7 @@ java -jar apktool.jar b -o ./$apk_output_file ./decompiled_apk/
 echo "[*] Resigning apk"
 java -jar ubersigner.jar --apks ./$apk_output_file
 
+# just file name trimming stuff to make it work
 file_minus_extension="${apk_output_file%.apk}"
 patched_apk="$file_minus_extension-aligned-debugSigned.apk"
 echo "[*] Copying $patched_apk to /tmp"
